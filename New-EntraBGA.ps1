@@ -1,5 +1,9 @@
 <#
-
+    .Example
+    .\New-EntraBGA.ps1 -AccountGivenName Casey -AccountGivenSurname Worste -AccountPassword ade8h398#$%T#%$T^Rtbcx6
+    .Notes
+    Author: Robert Przybylski 
+    azureblog.pl 2023
 #>
 
 [CmdletBinding()]
@@ -41,13 +45,13 @@ else {
 #endregion
 
 #region Rolle assignement
-$gaRoleDefinitionID = Get-MgRoleManagementDirectoryRoleDefinition | Where-Object {$_.DisplayName -eq "Global Administrator"} | Select-Object -ExpandProperty ID
+$gaRoleDefinitionID = Get-MgRoleManagementDirectoryRoleDefinition | Where-Object { $_.DisplayName -eq "Global Administrator" } | Select-Object -ExpandProperty ID
 #based on "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference"
 $params = @{
-	"@odata.type" = "#microsoft.graph.unifiedRoleAssignment"
-	roleDefinitionId = $gaRoleDefinitionID
-	principalId = $bgaID
-	directoryScopeId = "/"
+    "@odata.type"    = "#microsoft.graph.unifiedRoleAssignment"
+    roleDefinitionId = $gaRoleDefinitionID
+    principalId      = $bgaID
+    directoryScopeId = "/"
 }
 Write-Host "Assigning GA role with ID '$gaRoleDefinitionID' to upn '$upn' with id '$bgaID'" -ForegroundColor Green
 New-MgRoleManagementDirectoryRoleAssignment -BodyParameter $params
@@ -56,20 +60,23 @@ New-MgRoleManagementDirectoryRoleAssignment -BodyParameter $params
 #region CA Policy exclude
 $caPolicies = Get-MgIdentityConditionalAccessPolicy
 Write-Host "Found '$($caPolicies.Count)' CA policies..." -ForegroundColor Yellow
-foreach ($policy in $caPolicies){
+foreach ($policy in $caPolicies) {
     Write-Host "Updating policy '$($policy.DisplayName)' to exclude BGA user with id '$bgaID'" -ForegroundColor Green
     $existingExcludeUsersID = (Get-MgIdentityConditionalAccessPolicy -ConditionalAccessPolicyId $policy.ID).Conditions.users.ExcludeUsers
     $excludedUsers = @()
     $excludedUsers += $existingExcludeUsersID
     $excludedUsers += $bgaID
-    
+    $excludedUsers = $excludedUsers | Select-Object -Unique
+    $existingExcludeGroupsID = (Get-MgIdentityConditionalAccessPolicy -ConditionalAccessPolicyId $policy.ID).Conditions.users.ExcludeGroups
+
     $params = @{
         conditions = @{
             users = @{
-                excludeUsers = @(
-                    $excludedUsers |ConvertTo-Json
+                excludeUsers  = @(
+                    $excludedUsers
                 )
                 excludeGroups = @(
+                    $existingExcludeGroupsID
                 )
             }
         }
