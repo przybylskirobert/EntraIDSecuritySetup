@@ -1,6 +1,7 @@
 <#
     .Example
-    .\New-EntraBGA.ps1 -AccountGivenName Casey -AccountGivenSurname Worste -AccountPassword ade8h398#$%T#%$T^Rtbcx6
+    $password = Read-Host -AsSecureString
+    .\New-EntraBGA.ps1 -AccountGivenName Casey -AccountGivenSurname Worste -AccountPassword $password
     .Notes
     Author: Robert Przybylski 
     azureblog.pl 2023
@@ -21,7 +22,7 @@ if ($null -eq $moduleTest) {
     Install-module Microsoft.Graph -Scope CurrentUser | Out-Null
 }
 
-Connect-MgGraph -Scopes User.ReadWrite.all
+Connect-MgGraph -Scopes User.ReadWrite.all, EntitlementManagement.ReadWrite.All, RoleManagement.ReadWrite.Directory, Policy.ReadWrite.ConditionalAccess
 
 #region Creating BGA user
 $passwordProfile = @{
