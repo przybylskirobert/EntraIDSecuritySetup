@@ -10,17 +10,23 @@
 [CmdletBinding()]
 
 param (
+    [Parameter(MAndatory)]
     [string] $AccountGivenName,
+    [Parameter(MAndatory)]
     [string] $AccountGivenSurname,
+    [Parameter(MAndatory)]
     [securestring] $AccountPassword
 )
 
+#region module test
 $moduleTest = Get-InstalledModule Microsoft.Graph -ErrorAction SilentlyContinue
 if ($null -eq $moduleTest) {
     Write-Host "Microsoft.Graph module is missing"
     Write-Host "Installing..."
     Install-module Microsoft.Graph -Scope CurrentUser | Out-Null
 }
+#endregion
+
 
 Connect-MgGraph -Scopes User.ReadWrite.all, EntitlementManagement.ReadWrite.All, RoleManagement.ReadWrite.Directory, Policy.ReadWrite.ConditionalAccess
 
